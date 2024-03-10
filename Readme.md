@@ -20,4 +20,4 @@ You need to run every file seperately:
         - node orders.js
 
 
-For the testing GCP cloud functions of HTTPs Trigger you need to import the function-source.zip in inline editor of GCP cloud function and you're good to go
+For the testing of GCP cloud functions such as HTTPs Trigger you need to import the function-source.zip in inline editor of GCP cloud function and you're good to go.
