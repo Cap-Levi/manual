@@ -1,7 +1,9 @@
 require("dotenv").config();
 
+const express = require('express');
 const mongoose = require('mongoose');
 
+// Connect
 mongoose.connect(process.env.MONGO_URI, { 
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -14,49 +16,55 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const Customer = require('./customer');
 
-exports.createCustomer = async (req, res) => {
+const app = express();
+const port = 5000;
+app.use(express.json());
+
+app.post('/customer', (req, res) => {
     const newCustomer = new Customer(req.body);
-    try {
-        await newCustomer.save();
+    newCustomer.save().then(() => {
         res.send('New Customer created successfully!');
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
 
-exports.getCustomers = async (req, res) => {
-    try {
-        const customers = await Customer.find();
-        res.json(customers);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Internal Server Error!');
-    }
-};
-
-exports.getCustomerById = async (req, res) => {
-    try {
-        const customer = await Customer.findById(req.params.id);
-        if (!customer) {
-            return res.status(404).send('Customer not found');
+app.get('/customer', (req, res) => {
+    Customer.find().then((customers) => {
+        if (customers) {
+            res.json(customers);
+        } else {
+            res.status(404).send('Customers not found');
         }
-        res.json(customer);
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
 
-exports.deleteCustomerById = async (req, res) => {
-    try {
-        const customer = await Customer.findByIdAndRemove(req.params.id);
-        if (!customer) {
-            return res.status(404).send('Customer not found');
+app.get('/customer/:id', (req, res) => {
+    Customer.findById(req.params.id).then((customer) => {
+        if (customer) {
+            res.json(customer);
+        } else {
+            res.status(404).send('Customer not found');
         }
-        res.send('Customer deleted successfully!');
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
+
+app.delete('/customer/:id', (req, res) => {
+    Customer.findByIdAndRemove(req.params.id).then((customer) => {
+        if (customer) {
+            res.json('Customer deleted Successfully!');
+        } else {
+            res.status(404).send('Customer not found');
+        }
+    }).catch((err) => {
+        res.status(500).send('Internal Server Error!');
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Up and Running on port ${port} - This is Customer service`);
+});

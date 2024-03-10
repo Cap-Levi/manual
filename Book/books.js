@@ -1,7 +1,9 @@
 require("dotenv").config();
 
+const express = require('express');
 const mongoose = require('mongoose');
 
+// Connect
 mongoose.connect(process.env.MONGO_URI, { 
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -14,54 +16,55 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const Book = require('./book');
 
-exports.createBook = async (req, res) => {
-    const newBook = new Book(req.body);
-    try {
-        await newBook.save();
-        res.send('New Book added successfully!');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Internal Server Error!');
-    }
-};
+const app = express();
+const port = 3000;
+app.use(express.json());
 
-exports.getBooks = async (req, res) => {
-    try {
-        const books = await Book.find();
+app.post('/book', (req, res) => {
+    const newBook = new Book(req.body);
+    newBook.save().then(() => {
+        res.send('New Book added successfully!');
+    }).catch((err) => {
+        res.status(500).send('Internal Server Error!');
+    });
+});
+
+app.get('/book', (req, res) => {
+    Book.find().then((books) => {
         if (books.length !== 0) {
             res.json(books);
         } else {
             res.status(404).send('Books not found');
         }
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
 
-exports.getBookById = async (req, res) => {
-    try {
-        const book = await Book.findById(req.params.id);
+app.get('/book/:id', (req, res) => {
+    Book.findById(req.params.id).then((book) => {
         if (book) {
             res.json(book);
         } else {
             res.status(404).send('Book not found');
         }
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
 
-exports.deleteBookById = async (req, res) => {
-    try {
-        const book = await Book.findByIdAndRemove(req.params.id);
-        if (!book) {
-            return res.status(404).send('Book not found');
+app.delete('/book/:id', (req, res) => {
+    Book.findByIdAndRemove(req.params.id).then((book) => {
+        if (book) {
+            res.json('Book deleted successfully!');
+        } else {
+            res.status(404).send('Book not found');
         }
-        res.send('Book deleted successfully!');
-    } catch (err) {
-        console.error(err);
+    }).catch((err) => {
         res.status(500).send('Internal Server Error!');
-    }
-};
+    });
+});
+
+app.listen(port, () => {
+    console.log(`Up and Running on port ${port} - This is Book service`);
+});
