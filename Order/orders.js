@@ -22,15 +22,16 @@ app.use(express.json());
 
 app.post('/order', (req, res) => {
     const newOrder = new Order({
-        customerID: mongoose.Types.ObjectId(req.body.customerID),
-        bookID: mongoose.Types.ObjectId(req.body.bookID),
-        initialDate: req.body.initialDate,
-        deliveryDate: req.body.deliveryDate
+        customerID: new mongoose.Types.ObjectId(req.body.customerID),
+        bookID: new mongoose.Types.ObjectId(req.body.bookID),
+        initialDate: new Date(req.body.initialDate),
+        deliveryDate: new Date(req.body.deliveryDate)
     });
     newOrder.save().then(() => {
         res.send('New order added successfully!');
     }).catch((err) => {
         res.status(500).send('Internal Server Error!');
+        console.log(err);
     });
 });
 
@@ -59,6 +60,18 @@ app.get('/order/:id', (req, res) => {
                     res.json(orderObject);
                 });
             });
+        } else {
+            res.status(404).send('Order not found');
+        }
+    }).catch((err) => {
+        res.status(500).send('Internal Server Error!');
+    });
+});
+
+app.delete('/order/:id', (req, res) => {
+    Order.findByIdAndDelete(req.params.id).then((order) => {
+        if (order) {
+            res.json('Order deleted Successfully!');
         } else {
             res.status(404).send('Order not found');
         }
